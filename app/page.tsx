@@ -250,96 +250,51 @@ export default function Home() {
 
             <div className="why-matters-grid">
               <div className="why-matters-card">
-                <div className="why-matters-icon">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 10L65 35L92 40L71 60L76 87L50 73L24 87L29 60L8 40L35 35L50 10Z" fill="url(#diamond-gradient)" stroke="currentColor" strokeWidth="2"/>
-                    <defs>
-                      <linearGradient id="diamond-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#ff6b9d"/>
-                        <stop offset="100%" stopColor="#a78bfa"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                <div className="why-matters-art">
+                  <img src="/art/vermeer.jpg" alt="Girl with a Pearl Earring by Vermeer" />
                 </div>
-                <h3 className="why-matters-card-title">First Impressions Are Everything</h3>
-                <p className="why-matters-card-text">
-                  93% of potential clients judge your firm within seconds of visiting your website. A strong brand signals credibility, expertise, and trustworthiness before a single word is read.
-                </p>
+                <div className="why-matters-card-body">
+                  <h3 className="why-matters-card-title">First Impressions Are Everything</h3>
+                  <p className="why-matters-card-text">
+                    93% of potential clients judge your firm within seconds of visiting your website. A strong brand signals credibility, expertise, and trustworthiness before a single word is read.
+                  </p>
+                </div>
               </div>
 
               <div className="why-matters-card">
-                <div className="why-matters-icon">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="40" fill="url(#target-gradient1)" stroke="currentColor" strokeWidth="2"/>
-                    <circle cx="50" cy="50" r="28" fill="url(#target-gradient2)" stroke="currentColor" strokeWidth="2"/>
-                    <circle cx="50" cy="50" r="16" fill="url(#target-gradient3)" stroke="currentColor" strokeWidth="2"/>
-                    <circle cx="50" cy="50" r="6" fill="#fff"/>
-                    <defs>
-                      <linearGradient id="target-gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#a78bfa"/>
-                        <stop offset="100%" stopColor="#4a9eff"/>
-                      </linearGradient>
-                      <linearGradient id="target-gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#4a9eff"/>
-                        <stop offset="100%" stopColor="#6bcf7f"/>
-                      </linearGradient>
-                      <linearGradient id="target-gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#6bcf7f"/>
-                        <stop offset="100%" stopColor="#ffd93d"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                <div className="why-matters-art">
+                  <img src="/art/wanderer.jpg" alt="Wanderer above the Sea of Fog by Caspar David Friedrich" />
                 </div>
-                <h3 className="why-matters-card-title">Stand Out in a Sea of Sameness</h3>
-                <p className="why-matters-card-text">
-                  Most law firms look identical—generic stock photos, corporate jargon, and forgettable websites. Elite firms use distinctive branding to command premium fees and attract ideal clients.
-                </p>
+                <div className="why-matters-card-body">
+                  <h3 className="why-matters-card-title">Stand Out in a Sea of Sameness</h3>
+                  <p className="why-matters-card-text">
+                    Most law firms look identical — generic stock photos, corporate jargon, and forgettable websites. Elite firms use distinctive branding to command premium fees and attract ideal clients.
+                  </p>
+                </div>
               </div>
 
               <div className="why-matters-card">
-                <div className="why-matters-icon">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 85L25 45L35 65L45 35L55 55L65 25L75 50L85 15" stroke="url(#chart-gradient)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="25" cy="45" r="4" fill="#4a9eff"/>
-                    <circle cx="35" cy="65" r="4" fill="#6bcf7f"/>
-                    <circle cx="45" cy="35" r="4" fill="#ff8c42"/>
-                    <circle cx="55" cy="55" r="4" fill="#ffd93d"/>
-                    <circle cx="65" cy="25" r="4" fill="#ff6b9d"/>
-                    <circle cx="75" cy="50" r="4" fill="#a78bfa"/>
-                    <circle cx="85" cy="15" r="4" fill="#6bcf7f"/>
-                    <defs>
-                      <linearGradient id="chart-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#4a9eff"/>
-                        <stop offset="50%" stopColor="#6bcf7f"/>
-                        <stop offset="100%" stopColor="#ffd93d"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                <div className="why-matters-art">
+                  <img src="/art/venus.jpg" alt="The Birth of Venus by Botticelli" />
                 </div>
-                <h3 className="why-matters-card-title">Convert More High-Value Clients</h3>
-                <p className="why-matters-card-text">
-                  Firms with strong brands convert 40% more leads and charge 25% higher rates. Your brand isn't just aesthetics—it's your most powerful business development tool.
-                </p>
+                <div className="why-matters-card-body">
+                  <h3 className="why-matters-card-title">Convert More High-Value Clients</h3>
+                  <p className="why-matters-card-text">
+                    Firms with strong brands convert 40% more leads and charge 25% higher rates. Your brand isn&apos;t just aesthetics — it&apos;s your most powerful business development tool.
+                  </p>
+                </div>
               </div>
 
               <div className="why-matters-card">
-                <div className="why-matters-icon">
-                  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 15L60 40H87L65 57L73 85L50 68L27 85L35 57L13 40H40L50 15Z" fill="url(#trophy-gradient)" stroke="currentColor" strokeWidth="2"/>
-                    <rect x="40" y="70" width="20" height="15" fill="url(#trophy-gradient)" stroke="currentColor" strokeWidth="2"/>
-                    <rect x="35" y="85" width="30" height="5" fill="url(#trophy-gradient)" stroke="currentColor" strokeWidth="2"/>
-                    <defs>
-                      <linearGradient id="trophy-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#6bcf7f"/>
-                        <stop offset="100%" stopColor="#ffd93d"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                <div className="why-matters-art">
+                  <img src="/art/athens.jpg" alt="The School of Athens by Raphael" />
                 </div>
-                <h3 className="why-matters-card-title">Attract Top Talent</h3>
-                <p className="why-matters-card-text">
-                  The best lawyers want to work for firms with strong identities and clear missions. A compelling brand helps you recruit and retain exceptional talent in a competitive market.
-                </p>
+                <div className="why-matters-card-body">
+                  <h3 className="why-matters-card-title">Attract Top Talent</h3>
+                  <p className="why-matters-card-text">
+                    The best lawyers want to work for firms with strong identities and clear missions. A compelling brand helps you recruit and retain exceptional talent in a competitive market.
+                  </p>
+                </div>
               </div>
             </div>
 
