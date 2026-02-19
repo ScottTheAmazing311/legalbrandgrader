@@ -31,10 +31,10 @@ const EXEMPLAR_BENCHMARKS = {
 };
 
 const SCORING_WEIGHTS = {
-  brandClarity: 15,
+  brandClarity: 20,
   languageDifferentiation: 15,
   visualCoherence: 10,
-  visualFreshness: 15,
+  visualFreshness: 10,
   cultureVisibility: 10,
   peopleInvestment: 15,
   contentThoughtLeadership: 10,
@@ -71,6 +71,7 @@ interface AnalysisResult {
   peerComparison: string;
   firmSizeTier?: string;
   firmSizeSignals?: string[];
+  isOutlierFirm?: boolean;
   scrapedPagesCount?: number;
   scrapingErrors?: string[];
 }

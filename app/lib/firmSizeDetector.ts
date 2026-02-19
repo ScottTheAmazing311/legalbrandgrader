@@ -8,6 +8,8 @@ export type FirmTier = 'boutique' | 'midsize' | 'large' | 'biglaw';
 export interface FirmSizeResult {
   tier: FirmTier;
   signals: string[];
+  isOutlier: boolean; // 500+ employees — grade less strictly
+  estimatedHeadcount: number | null;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -31,6 +33,16 @@ const KNOWN_BIGLAW_NAMES = [
   'reed smith', 'squire patton', 'pillsbury', 'katten muchin',
 ];
 
+// Known mega firms (500+ attorneys) — outliers that should be graded less strictly
+const KNOWN_MEGA_FIRMS = [
+  'morgan & morgan', 'morgan and morgan', 'morganandmorgan',
+  'littler mendelson', 'littler', 'jackson lewis', 'ogletree deakins',
+  'fisher phillips', 'seyfarth shaw', 'seyfarth',
+  'baker donelson', 'polsinelli', 'husch blackwell',
+  'foley & lardner', 'foley lardner', 'mcguirewoods',
+  'bryan cave', 'thompson hine', 'faegre drinker',
+];
+
 // Prestige indicator terms
 const PRESTIGE_TERMS = [
   'am law', 'amlaw', 'am law 100', 'am law 200',
@@ -44,6 +56,8 @@ const PRESTIGE_TERMS = [
 export function detectFirmSize(site: ScrapedSite): FirmSizeResult {
   const signals: string[] = [];
   const scores: number[] = [];
+  let isOutlier = false;
+  let estimatedHeadcount: number | null = null;
 
   // Gather all text from all pages
   const allText = getAllText(site);
@@ -53,18 +67,34 @@ export function detectFirmSize(site: ScrapedSite): FirmSizeResult {
   const firmName = site.homepage?.title?.toLowerCase() || '';
   const firmUrl = site.homepage?.url?.toLowerCase() || '';
 
+  // ── Signal 0: Known mega firm match (500+ outlier) ──
+  for (const name of KNOWN_MEGA_FIRMS) {
+    if (firmName.includes(name) || allTextLower.includes(name) || firmUrl.includes(name.replace(/[&\s]+/g, ''))) {
+      signals.push(`Known mega firm (500+ attorneys): "${name}"`);
+      isOutlier = true;
+      break;
+    }
+  }
+
   // ── Signal 1: Known BigLaw name match ──
   for (const name of KNOWN_BIGLAW_NAMES) {
     if (firmName.includes(name) || allTextLower.includes(name) || firmUrl.includes(name.replace(/\s+/g, ''))) {
       signals.push(`Known BigLaw firm name match: "${name}"`);
-      return { tier: 'biglaw', signals }; // Direct override
+      // Most BigLaw firms are 500+ — mark as outlier too
+      isOutlier = true;
+      return { tier: 'biglaw', signals, isOutlier, estimatedHeadcount }; // Direct override
     }
   }
 
   // ── Signal 2: Attorney/lawyer count ──
   const attorneyCount = detectAttorneyCount(allTextLower, site);
   if (attorneyCount !== null) {
+    estimatedHeadcount = attorneyCount;
     signals.push(`Detected ~${attorneyCount} attorneys/professionals`);
+    if (attorneyCount >= 500) {
+      isOutlier = true;
+      signals.push(`500+ attorneys — outlier grading applies`);
+    }
     if (attorneyCount > 250) scores.push(4);
     else if (attorneyCount > 75) scores.push(3);
     else if (attorneyCount > 15) scores.push(2);
@@ -101,7 +131,7 @@ export function detectFirmSize(site: ScrapedSite): FirmSizeResult {
   // ── Calculate final tier ──
   if (scores.length === 0) {
     signals.push('No strong size signals detected — defaulting to boutique');
-    return { tier: 'boutique', signals };
+    return { tier: 'boutique', signals, isOutlier, estimatedHeadcount };
   }
 
   const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -112,7 +142,7 @@ export function detectFirmSize(site: ScrapedSite): FirmSizeResult {
   else if (avgScore >= 1.5) tier = 'midsize';
   else tier = 'boutique';
 
-  return { tier, signals };
+  return { tier, signals, isOutlier, estimatedHeadcount };
 }
 
 // ═══════════════════════════════════════════════════════════

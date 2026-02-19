@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { scrapeSite, buildContentSummary } from '../../lib/scraper';
-import { detectFirmSize, type FirmTier } from '../../lib/firmSizeDetector';
+import { detectFirmSize, type FirmTier, type FirmSizeResult } from '../../lib/firmSizeDetector';
 
 export const maxDuration = 30;
 
@@ -20,7 +20,7 @@ const EXEMPLAR_BENCHMARKS = {
 // ═══════════════════════════════════════════════════════════
 // PROMPT BUILDER — branches by firm tier
 // ═══════════════════════════════════════════════════════════
-function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTier: FirmTier): string {
+function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTier: FirmTier, isOutlier: boolean): string {
   const contentBlock = scrapedContent
     ? `\n\nHere is the actual scraped content from the firm's website:\n\n${scrapedContent}\n\nUse this content as the PRIMARY basis for your scoring. Be specific about what you observe in the actual content above.\n`
     : `\n\nNote: We were unable to scrape this website's content. Base your analysis on your knowledge of this firm and typical patterns for firms at this URL. Be transparent that your analysis is inference-based.\n`;
@@ -39,8 +39,8 @@ function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTie
         uxFoundations: 'UX & Digital Foundations',
       }
     : {
-        brandClarity: 'Brand Clarity',
-        languageDifferentiation: 'Language Differentiation',
+        brandClarity: 'Brand Clarity & Slogan',
+        languageDifferentiation: 'Firm Differentiation',
         visualCoherence: 'Visual Coherence',
         visualFreshness: 'Visual Freshness',
         cultureVisibility: 'Culture Visibility',
@@ -48,6 +48,17 @@ function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTie
         contentThoughtLeadership: 'Content & Thought Leadership',
         uxFoundations: 'UX & Digital Foundations',
       };
+
+  // Outlier clause for 500+ employee firms
+  const outlierClause = isOutlier
+    ? `\n\nIMPORTANT — OUTLIER FIRM (500+ employees detected):
+This is an exceptionally large firm where standard boutique/mid-size brand rules may not fully apply. Grade this firm LESS STRICTLY:
+- Add 8-12 points across all dimensions compared to how you'd score a typical firm with similar branding
+- Massive firms achieve brand awareness through sheer scale, advertising spend, and market saturation — credit this
+- Their UVP may be "we're everywhere and we're the biggest" — that IS a valid differentiator at this scale
+- Do not penalize for template-style websites if the firm compensates with massive brand recognition
+- Focus criticism on genuinely poor execution, not on lacking boutique-style personality\n`
+    : '';
 
   const scoringGuidelines = isLargeFirm
     ? `CRITICAL SCORING GUIDELINES FOR LARGE/BIGLAW FIRMS:
@@ -78,7 +89,7 @@ function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTie
     : '"peerComparison": "string (1 sentence comparing to exemplar firms like TopDog Law, Cho Law, ABC Law Centers, Bick Law)"';
 
   return `You are a legal brand analyst. Analyze the law firm website at: ${url}
-${contentBlock}
+${contentBlock}${outlierClause}
 Based on the content provided and observable signals, score this firm on 8 brand dimensions.
 
 Return ONLY a valid JSON object — no markdown, no explanation, no preamble. The JSON must match this exact structure:
@@ -155,6 +166,27 @@ Scoring calibration — your exemplar benchmarks (what ELITE law firm brands sco
 
 ${scoringGuidelines}
 
+SLOGAN & TAGLINE SCORING (heavily weighted within Brand Clarity):
+- A firm's slogan/tagline is one of the MOST important brand signals. It anchors the entire brand promise.
+- If the firm has a strong, memorable slogan that appears in the header or hero area, this is a MAJOR positive signal — boost brandClarity by 10-15 points.
+- If the slogan is repeated across multiple pages (header, footer, about page), it shows brand discipline — additional boost.
+- If the slogan is generic ("Fighting for you", "Experienced attorneys", "Justice for all") — this is a NEGATIVE signal, penalize brandClarity.
+- If no slogan/tagline is found at all, that itself is a weakness worth noting.
+
+FIRM DIFFERENTIATION (UVP) — key criteria for languageDifferentiation:
+- This dimension measures how clearly the firm communicates its Unique Value Proposition (UVP).
+- A clear, specific UVP ("We exclusively handle trucking accident cases in Texas") = high score.
+- A vague, generic UVP ("We provide aggressive representation") = low score. Most firms say this — it differentiates nothing.
+- Score HIGH if: the UVP is specific, niche-focused, tied to outcomes, or clearly distinct from competitors.
+- Score LOW if: the messaging could be copy-pasted onto any law firm website without anyone noticing.
+
+AUTHENTICITY (heavily weighted cross-cutting factor):
+- Authenticity in tone and messaging should be rewarded HEAVILY across all dimensions.
+- Signs of authenticity: founder's personal story, genuine voice (not corporate-speak), real client stories, behind-the-scenes content, specific anecdotes, honest about the firm's focus and limitations.
+- Signs of inauthenticity: buzzword-heavy copy, stock-feeling language, "we are committed to excellence" type platitudes, no human voice.
+- If authenticity is strong: boost cultureVisibility, brandClarity, and languageDifferentiation by 5-10 points each.
+- If copy feels templated/generic: penalize these same dimensions.
+
 Be specific about what you observe, not generic. The findings should be specific observations — not generic advice. Keep findings to 8-12 words each. The criticalGap should tease an insight that makes them want a full audit, but don't give away the full solution.`;
 }
 
@@ -211,7 +243,7 @@ export async function POST(request: NextRequest) {
     const scrapedContent = buildContentSummary(scrapedSite);
 
     // ── Step 4: Build prompt ──
-    const prompt = buildAnalysisPrompt(normalizedUrl, scrapedContent, firmSizeResult.tier);
+    const prompt = buildAnalysisPrompt(normalizedUrl, scrapedContent, firmSizeResult.tier, firmSizeResult.isOutlier);
 
     // ── Step 5: Call Claude API ──
     const anthropic = new Anthropic({ apiKey });
@@ -244,6 +276,7 @@ export async function POST(request: NextRequest) {
       ...result,
       firmSizeTier: firmSizeResult.tier,
       firmSizeSignals: firmSizeResult.signals,
+      isOutlierFirm: firmSizeResult.isOutlier,
       scrapedPagesCount,
       scrapingErrors: scrapedSite.errors,
     });

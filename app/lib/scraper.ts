@@ -11,6 +11,8 @@ export interface ParsedPage {
   bodyText: string;
   navLinks: { text: string; href: string }[];
   imageAlts: string[];
+  slogan: string | null;
+  sloganLocation: string | null; // 'header' | 'hero' | 'meta' | 'body'
 }
 
 export interface ScrapedSite {
@@ -124,7 +126,54 @@ function parsePage(html: string, url: string): ParsedPage {
     if (alt) imageAlts.push(alt);
   });
 
-  return { url, title, metaDescription, headings, bodyText, navLinks, imageAlts };
+  // Slogan / tagline extraction — check prominent locations
+  let slogan: string | null = null;
+  let sloganLocation: string | null = null;
+
+  // Reload HTML for slogan extraction (we stripped header/nav earlier for bodyText)
+  const $full = cheerio.load(html);
+
+  // Priority 1: Header area (tagline, slogan, subtitle classes in header/nav)
+  const headerSelectors = [
+    'header .tagline', 'header .slogan', 'header .subtitle', 'header .motto',
+    '.header-tagline', '.header-slogan', '.site-tagline', '.site-slogan',
+    'header p', '.top-bar p', '.header-tag',
+  ];
+  for (const sel of headerSelectors) {
+    const text = $full(sel).first().text().trim().replace(/\s+/g, ' ');
+    if (text && text.length > 5 && text.length < 150) {
+      slogan = text;
+      sloganLocation = 'header';
+      break;
+    }
+  }
+
+  // Priority 2: Hero area (h2 after h1, .hero p, .hero-subtitle)
+  if (!slogan) {
+    const heroSelectors = [
+      '.hero .subtitle', '.hero-subtitle', '.hero-tagline', '.hero-slogan',
+      '.hero h2', '.banner h2', '.hero p:first-of-type',
+    ];
+    for (const sel of heroSelectors) {
+      const text = $full(sel).first().text().trim().replace(/\s+/g, ' ');
+      if (text && text.length > 5 && text.length < 200) {
+        slogan = text;
+        sloganLocation = 'hero';
+        break;
+      }
+    }
+  }
+
+  // Priority 3: og:description or meta description if short enough to be a slogan
+  if (!slogan) {
+    const ogDesc = $full('meta[property="og:description"]').attr('content')?.trim() || '';
+    if (ogDesc && ogDesc.length > 5 && ogDesc.length < 120) {
+      slogan = ogDesc;
+      sloganLocation = 'meta';
+    }
+  }
+
+  return { url, title, metaDescription, headings, bodyText, navLinks, imageAlts, slogan, sloganLocation };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -223,6 +272,7 @@ function formatPageSection(page: ParsedPage, label: string): string {
   parts.push(`URL: ${page.url}`);
   if (page.title) parts.push(`Title: ${page.title}`);
   if (page.metaDescription) parts.push(`Meta: ${page.metaDescription}`);
+  if (page.slogan) parts.push(`Slogan/Tagline: "${page.slogan}" (found in: ${page.sloganLocation})`);
   if (page.headings.length > 0) parts.push(`Headings: ${page.headings.join(' | ')}`);
   if (page.bodyText) parts.push(`Content: ${page.bodyText}`);
   if (page.imageAlts.length > 0) parts.push(`Image Alts: ${page.imageAlts.join(', ')}`);
