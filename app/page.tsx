@@ -202,7 +202,7 @@ export default function Home() {
       <header>
         <div className="logo">
           <div className="logo-mark"></div>
-          <div className="logo-text">Legal<span>Brand</span>Grader</div>
+          <div className="logo-text">LegalBrandGrader</div>
         </div>
         <div className="header-tag">Calibrated against elite exemplars</div>
       </header>
@@ -422,9 +422,9 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
               marginTop: '20px',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.72rem',
-              color: 'var(--text-tertiary)',
+              color: 'var(--text-secondary)',
               lineHeight: '1.5',
-              borderLeft: '1px solid var(--border-light)',
+              borderLeft: '1px solid var(--border)',
               paddingLeft: '14px',
               maxWidth: '460px',
               letterSpacing: '-0.01em'
@@ -521,7 +521,7 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
         </div>
         <div className="benchmark-legend">
           <div className="legend-item">
-            <div className="legend-dot" style={{ background: 'var(--surface-3)' }}></div>
+            <div className="legend-dot" style={{ background: 'var(--surface-2)' }}></div>
             Exemplar avg
           </div>
           <div className="legend-item">
@@ -540,18 +540,17 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
       }}>
         <div style={{
           background: 'var(--surface)',
-          border: '1px solid rgba(62, 207, 142, 0.12)',
-          borderRadius: 'var(--radius-md)',
+          border: '1px solid rgba(45, 122, 82, 0.15)',
           padding: '28px 28px'
         }}>
           <div style={{
             fontFamily: 'var(--font-body)',
-            fontSize: '0.6rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            fontSize: '0.55rem',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase' as const,
             color: 'var(--green)',
             marginBottom: '12px',
-            fontWeight: 600
+            fontWeight: 700
           }}>Top Strength</div>
           <div style={{
             fontFamily: 'var(--font-display)',
@@ -564,20 +563,19 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
         </div>
         <div style={{
           background: 'var(--surface)',
-          border: '1px solid rgba(234, 179, 8, 0.12)',
-          borderRadius: 'var(--radius-md)',
+          border: '1px solid rgba(151, 112, 10, 0.15)',
           padding: '28px 28px',
-          position: 'relative',
-          overflow: 'hidden'
+          position: 'relative' as const,
+          overflow: 'hidden' as const
         }}>
           <div style={{
             fontFamily: 'var(--font-body)',
-            fontSize: '0.6rem',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase',
+            fontSize: '0.55rem',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase' as const,
             color: 'var(--yellow)',
             marginBottom: '12px',
-            fontWeight: 600
+            fontWeight: 700
           }}>Critical Gap</div>
           <div style={{
             fontFamily: 'var(--font-display)',
@@ -589,9 +587,9 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
           }}>{result.criticalGap || 'Revealed in full audit'}</div>
           <div style={{
             fontSize: '0.78rem',
-            color: 'var(--text-tertiary)',
+            color: 'var(--text-secondary)',
             marginTop: '10px',
-            lineHeight: '1.5',
+            lineHeight: '1.55',
             letterSpacing: '-0.01em'
           }}>Full breakdown + actionable fix included in your comprehensive audit.</div>
         </div>
