@@ -464,14 +464,15 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
           <div className="score-verdict">{result.verdict || ''}</div>
           {result.peerComparison && (
             <div style={{
-              marginTop: '16px',
+              marginTop: '20px',
               fontFamily: 'var(--font-mono)',
-              fontSize: '0.75rem',
-              color: 'var(--text-secondary)',
-              lineHeight: '1.6',
-              borderLeft: '2px solid var(--accent)',
+              fontSize: '0.72rem',
+              color: 'var(--text-tertiary)',
+              lineHeight: '1.5',
+              borderLeft: '1px solid var(--border-light)',
               paddingLeft: '14px',
-              maxWidth: '460px'
+              maxWidth: '460px',
+              letterSpacing: '-0.01em'
             }}>
               {result.peerComparison}
             </div>
@@ -579,61 +580,64 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: '12px',
-        marginBottom: '56px'
+        gap: '8px',
+        marginBottom: '72px'
       }}>
         <div style={{
           background: 'var(--surface)',
-          border: '1px solid rgba(62, 207, 142, 0.25)',
+          border: '1px solid rgba(62, 207, 142, 0.12)',
           borderRadius: 'var(--radius-md)',
-          padding: '28px 32px'
+          padding: '28px 28px'
         }}>
           <div style={{
             fontFamily: 'var(--font-body)',
-            fontSize: '0.65rem',
-            letterSpacing: '0.15em',
+            fontSize: '0.6rem',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
             color: 'var(--green)',
             marginBottom: '12px',
-            fontWeight: 700
-          }}>✦ Top Strength</div>
+            fontWeight: 600
+          }}>Top Strength</div>
           <div style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '1rem',
+            fontSize: '0.95rem',
             fontWeight: 700,
-            marginBottom: '8px',
-            color: 'var(--text-primary)'
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            lineHeight: '1.3'
           }}>{result.topStrength || 'Identified in audit'}</div>
         </div>
         <div style={{
           background: 'var(--surface)',
-          border: '1px solid rgba(234, 179, 8, 0.25)',
+          border: '1px solid rgba(234, 179, 8, 0.12)',
           borderRadius: 'var(--radius-md)',
-          padding: '28px 32px',
+          padding: '28px 28px',
           position: 'relative',
           overflow: 'hidden'
         }}>
           <div style={{
             fontFamily: 'var(--font-body)',
-            fontSize: '0.65rem',
-            letterSpacing: '0.15em',
+            fontSize: '0.6rem',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
             color: 'var(--yellow)',
             marginBottom: '12px',
-            fontWeight: 700
-          }}>⚑ Critical Gap</div>
+            fontWeight: 600
+          }}>Critical Gap</div>
           <div style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '1rem',
+            fontSize: '0.95rem',
             fontWeight: 700,
-            marginBottom: '8px',
-            color: 'var(--text-primary)'
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+            lineHeight: '1.3'
           }}>{result.criticalGap || 'Revealed in full audit'}</div>
           <div style={{
             fontSize: '0.78rem',
-            color: 'var(--text-secondary)',
-            marginTop: '8px',
-            lineHeight: '1.6'
+            color: 'var(--text-tertiary)',
+            marginTop: '10px',
+            lineHeight: '1.5',
+            letterSpacing: '-0.01em'
           }}>Full breakdown + actionable fix included in your comprehensive audit.</div>
         </div>
       </div>
