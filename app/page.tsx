@@ -82,7 +82,7 @@ type ViewState = 'input' | 'loading' | 'results';
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════
 function getScoreClass(score: number): string {
-  if (score >= 80) return 'excellent';
+  if (score >= 75) return 'excellent';
   if (score >= 65) return 'good';
   if (score >= 50) return 'average';
   if (score >= 35) return 'below';
@@ -90,7 +90,7 @@ function getScoreClass(score: number): string {
 }
 
 function getGradeLabel(score: number): string {
-  if (score >= 80) return 'Strong Brand';
+  if (score >= 75) return 'Strong Brand';
   if (score >= 65) return 'Developing';
   if (score >= 50) return 'Needs Work';
   if (score >= 35) return 'At Risk';
