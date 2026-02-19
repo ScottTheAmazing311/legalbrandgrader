@@ -9,10 +9,12 @@ export interface ParsedPage {
   metaDescription: string;
   headings: string[];
   bodyText: string;
+  headerText: string; // Text from header/nav area before stripping
   navLinks: { text: string; href: string }[];
   imageAlts: string[];
   slogan: string | null;
-  sloganLocation: string | null; // 'header' | 'hero' | 'meta' | 'body'
+  sloganLocation: string | null; // 'header' | 'hero' | 'meta' | 'schema' | 'body'
+  schemaData: string[]; // JSON-LD structured data descriptions
 }
 
 export interface ScrapedSite {
@@ -97,6 +99,48 @@ function parsePage(html: string, url: string): ParsedPage {
     if (text) headings.push(text);
   });
 
+  // Extract header/nav text BEFORE stripping (captures taglines, slogans in header)
+  let headerText = '';
+  $('header, nav, .header, .top-bar, .site-header').each((i, el) => {
+    headerText += ' ' + $(el).text();
+  });
+  headerText = headerText.replace(/\s+/g, ' ').trim().slice(0, 500);
+
+  // Extract JSON-LD structured data (schema.org) — often contains firm descriptions, slogans
+  const schemaData: string[] = [];
+  $('script[type="application/ld+json"]').each((i, el) => {
+    try {
+      const raw = $(el).html();
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      // Extract description fields from schema
+      const extractDescriptions = (obj: any, depth = 0): void => {
+        if (depth > 3 || !obj) return;
+        if (typeof obj === 'object') {
+          if (obj.description && typeof obj.description === 'string') {
+            schemaData.push(obj.description.trim());
+          }
+          if (obj.slogan && typeof obj.slogan === 'string') {
+            schemaData.push(obj.slogan.trim());
+          }
+          if (obj.name && typeof obj.name === 'string' && obj['@type']) {
+            schemaData.push(`${obj['@type']}: ${obj.name}`);
+          }
+          for (const val of Object.values(obj)) {
+            if (typeof val === 'object') extractDescriptions(val, depth + 1);
+          }
+        }
+      };
+      if (Array.isArray(parsed)) {
+        parsed.forEach(item => extractDescriptions(item));
+      } else {
+        extractDescriptions(parsed);
+      }
+    } catch {
+      // skip invalid JSON-LD
+    }
+  });
+
   // Body text — strip script/style/nav/footer, collapse whitespace
   $('script, style, nav, footer, header, noscript, iframe, svg').remove();
   let bodyText = $('body').text().replace(/\s+/g, ' ').trim();
@@ -164,7 +208,19 @@ function parsePage(html: string, url: string): ParsedPage {
     }
   }
 
-  // Priority 3: og:description or meta description if short enough to be a slogan
+  // Priority 3: JSON-LD schema data — often contains explicit slogans/descriptions
+  if (!slogan) {
+    for (const desc of schemaData) {
+      // Look for short, slogan-like descriptions
+      if (desc.length > 5 && desc.length < 120 && !desc.startsWith('{')) {
+        slogan = desc;
+        sloganLocation = 'schema';
+        break;
+      }
+    }
+  }
+
+  // Priority 4: og:description or meta description if short enough to be a slogan
   if (!slogan) {
     const ogDesc = $full('meta[property="og:description"]').attr('content')?.trim() || '';
     if (ogDesc && ogDesc.length > 5 && ogDesc.length < 120) {
@@ -173,7 +229,7 @@ function parsePage(html: string, url: string): ParsedPage {
     }
   }
 
-  return { url, title, metaDescription, headings, bodyText, navLinks, imageAlts, slogan, sloganLocation };
+  return { url, title, metaDescription, headings, bodyText, headerText, navLinks, imageAlts, slogan, sloganLocation, schemaData };
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -273,6 +329,8 @@ function formatPageSection(page: ParsedPage, label: string): string {
   if (page.title) parts.push(`Title: ${page.title}`);
   if (page.metaDescription) parts.push(`Meta: ${page.metaDescription}`);
   if (page.slogan) parts.push(`Slogan/Tagline: "${page.slogan}" (found in: ${page.sloganLocation})`);
+  if (page.schemaData.length > 0) parts.push(`Schema/Structured Data: ${page.schemaData.join(' | ')}`);
+  if (page.headerText) parts.push(`Header/Nav Text: ${page.headerText}`);
   if (page.headings.length > 0) parts.push(`Headings: ${page.headings.join(' | ')}`);
   if (page.bodyText) parts.push(`Content: ${page.bodyText}`);
   if (page.imageAlts.length > 0) parts.push(`Image Alts: ${page.imageAlts.join(', ')}`);

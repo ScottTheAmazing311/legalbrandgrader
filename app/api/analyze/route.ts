@@ -169,9 +169,18 @@ ${scoringGuidelines}
 SLOGAN & TAGLINE SCORING (heavily weighted within Brand Clarity):
 - A firm's slogan/tagline is one of the MOST important brand signals. It anchors the entire brand promise.
 - If the firm has a strong, memorable slogan that appears in the header or hero area, this is a MAJOR positive signal — boost brandClarity by 10-15 points.
-- If the slogan is repeated across multiple pages (header, footer, about page), it shows brand discipline — additional boost.
+- If the slogan is repeated across multiple pages (header, footer, about page, schema data), it shows brand discipline — additional boost.
 - If the slogan is generic ("Fighting for you", "Experienced attorneys", "Justice for all") — this is a NEGATIVE signal, penalize brandClarity.
 - If no slogan/tagline is found at all, that itself is a weakness worth noting.
+- CHECK SCHEMA/STRUCTURED DATA: Slogans and brand messaging embedded in schema.org JSON-LD data count — they show intentional, site-wide brand implementation.
+
+BRAND MOTIFS, MASCOTS & THEMATIC CONSISTENCY (major scoring factor):
+- Look for recurring brand themes, mascots, nicknames, or visual/verbal motifs throughout the site content.
+- Examples: an attorney nicknamed "The Bull" with bull imagery everywhere, a firm using "warrior" language consistently, an animal mascot, a signature color/symbol woven through copy.
+- If a firm has a clear, distinctive brand motif that appears across multiple pages (headings, schema data, page names, body copy), this is an EXTREMELY strong brand signal.
+- A consistent motif that ties the firm name, founder persona, and messaging together is elite-level branding — boost brandClarity, visualCoherence, and languageDifferentiation significantly (10-20 points each).
+- Look in the Schema/Structured Data, Header/Nav Text, Image Alts, and page titles for brand motif repetition.
+- A firm that names its results page after its brand motif (e.g. "The Bull's Millionaire's Club") shows exceptional brand integration.
 
 FIRM DIFFERENTIATION (UVP) — key criteria for languageDifferentiation:
 - This dimension measures how clearly the firm communicates its Unique Value Proposition (UVP).
