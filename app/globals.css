@@ -2,9 +2,9 @@
 
 :root {
   --bg: #F6F1EB;
-  --surface: #EFEBE4;
-  --surface-2: #E8E3DC;
-  --surface-3: #DDD8D0;
+  --surface: #F9F6F1;
+  --surface-2: #F0ECE5;
+  --surface-3: #E6E2DB;
   --border: rgba(64, 58, 52, 0.10);
   --border-light: rgba(64, 58, 52, 0.08);
   --border-hover: rgba(64, 58, 52, 0.22);
