@@ -5,11 +5,18 @@ import { useState, useEffect } from 'react';
 // ═══════════════════════════════════════════════════════════
 // EXEMPLAR DATABASE & CONSTANTS
 // ═══════════════════════════════════════════════════════════
-const EXEMPLAR_FIRMS = [
+const BOUTIQUE_EXEMPLAR_FIRMS = [
   { name: "TopDog Law", url: "topdoglaw.com", specialty: "Personal Injury", strength: "Brand Identity & Founder Story" },
   { name: "Cho Law LLC", url: "cholawllc.com", specialty: "Immigration", strength: "Visual Coherence & Client Framing" },
   { name: "ABC Law Centers", url: "abclawcenters.com", specialty: "Birth Injury", strength: "Niche Authority & People Investment" },
   { name: "Bick Law LLP", url: "bicklawllp.com", specialty: "Environmental", strength: "UVP Clarity & Culture Visibility" }
+];
+
+const LARGE_FIRM_EXEMPLARS = [
+  { name: "Cravath, Swaine & Moore", url: "cravath.com", specialty: "Corporate / Litigation", strength: "Institutional Authority & Heritage" },
+  { name: "Wachtell, Lipton", url: "wlrk.com", specialty: "M&A / Corporate", strength: "Elite Positioning & Selectivity" },
+  { name: "Cooley LLP", url: "cooley.com", specialty: "Tech / Venture", strength: "Digital Sophistication & Innovation Brand" },
+  { name: "Gibson Dunn", url: "gibsondunn.com", specialty: "Litigation / Corporate", strength: "Thought Leadership & Talent Depth" }
 ];
 
 const EXEMPLAR_BENCHMARKS = {
@@ -34,6 +41,13 @@ const SCORING_WEIGHTS = {
   uxFoundations: 10
 };
 
+const TIER_LABELS: Record<string, string> = {
+  boutique: 'Boutique Firm',
+  midsize: 'Mid-Size Firm',
+  large: 'Large Firm',
+  biglaw: 'BigLaw / Global Firm',
+};
+
 // ═══════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════
@@ -55,6 +69,10 @@ interface AnalysisResult {
   topStrength: string;
   criticalGap: string;
   peerComparison: string;
+  firmSizeTier?: string;
+  firmSizeSignals?: string[];
+  scrapedPagesCount?: number;
+  scrapingErrors?: string[];
 }
 
 type ViewState = 'input' | 'loading' | 'results';
@@ -342,10 +360,10 @@ export default function Home() {
           <div className="loading-sub">{loadingUrl}</div>
           <div className="loading-steps">
             {[
-              'Scanning site structure & copy',
-              'Evaluating visual signals',
-              'Measuring language differentiation',
-              'Scoring people investment',
+              'Fetching website content',
+              'Detecting firm size & type',
+              'Evaluating visual & language signals',
+              'Scoring people investment & culture',
               'Calibrating against exemplars',
               'Building your scorecard'
             ].map((step, index) => (
@@ -386,6 +404,15 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
     'cultureVisibility', 'peopleInvestment', 'contentThoughtLeadership', 'uxFoundations'
   ];
 
+  const isLargeFirm = result.firmSizeTier === 'large' || result.firmSizeTier === 'biglaw';
+  const exemplarFirms = isLargeFirm ? LARGE_FIRM_EXEMPLARS : BOUTIQUE_EXEMPLAR_FIRMS;
+  const tierLabel = result.firmSizeTier ? (TIER_LABELS[result.firmSizeTier] || result.firmSizeTier) : null;
+  const tierClass = result.firmSizeTier ? `tier-${result.firmSizeTier}` : '';
+
+  // Data source info
+  const scrapedCount = result.scrapedPagesCount || 0;
+  const hasScrapedData = scrapedCount > 0;
+
   // Animate bars on mount
   useEffect(() => {
     // Trigger animations after a brief delay
@@ -419,6 +446,19 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
       <div className="score-hero">
         <div>
           <div className="score-firm-name">{url}</div>
+          {tierLabel && (
+            <div className={`firm-tier-badge ${tierClass}`}>{tierLabel}</div>
+          )}
+          {hasScrapedData && (
+            <div className="data-source-indicator">
+              Analyzed {scrapedCount} page{scrapedCount !== 1 ? 's' : ''} of live website content
+            </div>
+          )}
+          {!hasScrapedData && (
+            <div className="data-source-indicator">
+              Inference-based analysis — website content could not be fetched
+            </div>
+          )}
           <div className="score-headline">{result.firmName || 'Your Firm'}<br />Brand Assessment</div>
           <div className="score-verdict">{result.verdict || ''}</div>
           {result.peerComparison && (
@@ -426,9 +466,9 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
               marginTop: '16px',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.75rem',
-              color: 'var(--gray-4)',
+              color: 'var(--charcoal-light)',
               lineHeight: '1.6',
-              borderLeft: '2px solid var(--gold)',
+              borderLeft: '2px solid var(--yellow)',
               paddingLeft: '14px',
               maxWidth: '460px'
             }}>
@@ -499,9 +539,17 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
 
       {/* BENCHMARK BAR */}
       <div className="benchmark-section">
-        <div className="benchmark-title">How You Stack Up Against Elite Exemplars</div>
+        <div className="benchmark-title">
+          {isLargeFirm
+            ? 'How You Stack Up Against Leading Institutional Firms'
+            : 'How You Stack Up Against Elite Exemplars'
+          }
+        </div>
         <div className="benchmark-sub">
-          Calibrated against 4 law firms that have each cracked a different dimension of brand. Most firms score 20–35 points below this benchmark.
+          {isLargeFirm
+            ? 'Calibrated against leading institutional firms that excel in digital presence, thought leadership, and talent branding. Most firms score 20-35 points below this benchmark.'
+            : 'Calibrated against 4 law firms that have each cracked a different dimension of brand. Most firms score 20–35 points below this benchmark.'
+          }
         </div>
         <div className="benchmark-track">
           <div className="benchmark-avg-fill" style={{ width: `${avgExemplar}%` }}></div>
@@ -516,7 +564,7 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
         </div>
         <div className="benchmark-legend">
           <div className="legend-item">
-            <div className="legend-dot" style={{ background: 'var(--gray-3)' }}></div>
+            <div className="legend-dot" style={{ background: 'var(--charcoal-light)' }}></div>
             Exemplar avg
           </div>
           <div className="legend-item">
@@ -534,53 +582,55 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
         marginBottom: '56px'
       }}>
         <div style={{
-          background: 'var(--gray-1)',
-          border: '1px solid var(--border)',
-          borderRadius: '3px',
+          background: 'var(--white)',
+          border: '3px solid var(--green)',
+          borderRadius: 'var(--radius-md)',
           padding: '28px 32px'
         }}>
           <div style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-body)',
             fontSize: '0.65rem',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: '#4caf82',
-            marginBottom: '12px'
+            color: 'var(--green)',
+            marginBottom: '12px',
+            fontWeight: 700
           }}>✦ Top Strength</div>
           <div style={{
             fontFamily: 'var(--font-display)',
             fontSize: '1rem',
             fontWeight: 700,
             marginBottom: '8px',
-            color: 'var(--white)'
+            color: 'var(--charcoal)'
           }}>{result.topStrength || 'Identified in audit'}</div>
         </div>
         <div style={{
-          background: 'var(--gray-1)',
-          border: '1px solid rgba(201,168,76,0.3)',
-          borderRadius: '3px',
+          background: 'var(--white)',
+          border: '3px solid var(--yellow)',
+          borderRadius: 'var(--radius-md)',
           padding: '28px 32px',
           position: 'relative',
           overflow: 'hidden'
         }}>
           <div style={{
-            fontFamily: 'var(--font-mono)',
+            fontFamily: 'var(--font-body)',
             fontSize: '0.65rem',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: 'var(--gold)',
-            marginBottom: '12px'
+            color: '#d4a500',
+            marginBottom: '12px',
+            fontWeight: 700
           }}>⚑ Critical Gap</div>
           <div style={{
             fontFamily: 'var(--font-display)',
             fontSize: '1rem',
             fontWeight: 700,
             marginBottom: '8px',
-            color: 'var(--white)'
+            color: 'var(--charcoal)'
           }}>{result.criticalGap || 'Revealed in full audit'}</div>
           <div style={{
             fontSize: '0.78rem',
-            color: 'var(--gray-4)',
+            color: 'var(--charcoal-light)',
             marginTop: '8px',
             lineHeight: '1.6'
           }}>Full breakdown + actionable fix included in your comprehensive audit.</div>
@@ -589,9 +639,14 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
 
       {/* EXEMPLAR PANEL */}
       <div className="exemplar-section">
-        <div className="exemplar-section-title">Calibrated against {EXEMPLAR_FIRMS.length} exemplar firms</div>
+        <div className="exemplar-section-title">
+          {isLargeFirm
+            ? `Calibrated against ${exemplarFirms.length} leading institutional firms`
+            : `Calibrated against ${exemplarFirms.length} exemplar firms`
+          }
+        </div>
         <div className="exemplar-grid">
-          {EXEMPLAR_FIRMS.map((firm, i) => (
+          {exemplarFirms.map((firm, i) => (
             <div key={i} className="exemplar-card">
               <div className="exemplar-name">{firm.name}</div>
               <div className="exemplar-type">{firm.specialty}</div>
