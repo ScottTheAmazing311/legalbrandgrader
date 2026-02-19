@@ -467,9 +467,9 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
               marginTop: '16px',
               fontFamily: 'var(--font-mono)',
               fontSize: '0.75rem',
-              color: 'var(--charcoal-light)',
+              color: 'var(--text-secondary)',
               lineHeight: '1.6',
-              borderLeft: '2px solid var(--yellow)',
+              borderLeft: '2px solid var(--accent)',
               paddingLeft: '14px',
               maxWidth: '460px'
             }}>
@@ -565,7 +565,7 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
         </div>
         <div className="benchmark-legend">
           <div className="legend-item">
-            <div className="legend-dot" style={{ background: 'var(--charcoal-light)' }}></div>
+            <div className="legend-dot" style={{ background: 'var(--surface-3)' }}></div>
             Exemplar avg
           </div>
           <div className="legend-item">
@@ -579,12 +579,12 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: '16px',
+        gap: '12px',
         marginBottom: '56px'
       }}>
         <div style={{
-          background: 'var(--white)',
-          border: '3px solid var(--green)',
+          background: 'var(--surface)',
+          border: '1px solid rgba(62, 207, 142, 0.25)',
           borderRadius: 'var(--radius-md)',
           padding: '28px 32px'
         }}>
@@ -602,12 +602,12 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
             fontSize: '1rem',
             fontWeight: 700,
             marginBottom: '8px',
-            color: 'var(--charcoal)'
+            color: 'var(--text-primary)'
           }}>{result.topStrength || 'Identified in audit'}</div>
         </div>
         <div style={{
-          background: 'var(--white)',
-          border: '3px solid var(--yellow)',
+          background: 'var(--surface)',
+          border: '1px solid rgba(234, 179, 8, 0.25)',
           borderRadius: 'var(--radius-md)',
           padding: '28px 32px',
           position: 'relative',
@@ -618,7 +618,7 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
             fontSize: '0.65rem',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
-            color: '#d4a500',
+            color: 'var(--yellow)',
             marginBottom: '12px',
             fontWeight: 700
           }}>⚑ Critical Gap</div>
@@ -627,11 +627,11 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
             fontSize: '1rem',
             fontWeight: 700,
             marginBottom: '8px',
-            color: 'var(--charcoal)'
+            color: 'var(--text-primary)'
           }}>{result.criticalGap || 'Revealed in full audit'}</div>
           <div style={{
             fontSize: '0.78rem',
-            color: 'var(--charcoal-light)',
+            color: 'var(--text-secondary)',
             marginTop: '8px',
             lineHeight: '1.6'
           }}>Full breakdown + actionable fix included in your comprehensive audit.</div>
