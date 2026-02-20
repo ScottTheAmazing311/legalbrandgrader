@@ -82,6 +82,171 @@ body {
   50% { opacity: 0.3; }
 }
 
+@keyframes drift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(12px, -18px) rotate(90deg); }
+  50% { transform: translate(-8px, -32px) rotate(180deg); }
+  75% { transform: translate(16px, -14px) rotate(270deg); }
+  100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+@keyframes driftSlow {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-20px, -12px); }
+  66% { transform: translate(14px, -24px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes expandLine {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes orbFloat {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.035; }
+  50% { transform: translate(30px, -20px) scale(1.1); opacity: 0.06; }
+  100% { transform: translate(0, 0) scale(1); opacity: 0.035; }
+}
+
+/* ── DECORATIVE FLOATING SQUARES ── */
+.deco-squares {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.deco-square {
+  position: absolute;
+  background: var(--text-primary);
+  opacity: 0.04;
+}
+
+.deco-square:nth-child(1) {
+  width: 6px; height: 6px;
+  top: 18%; left: 8%;
+  animation: drift 24s var(--ease-out-quad) infinite;
+}
+.deco-square:nth-child(2) {
+  width: 4px; height: 4px;
+  top: 35%; right: 12%;
+  animation: drift 20s var(--ease-out-quad) infinite 2s;
+}
+.deco-square:nth-child(3) {
+  width: 8px; height: 8px;
+  top: 60%; left: 5%;
+  animation: drift 28s var(--ease-out-quad) infinite 5s;
+  opacity: 0.03;
+}
+.deco-square:nth-child(4) {
+  width: 5px; height: 5px;
+  top: 75%; right: 7%;
+  animation: drift 22s var(--ease-out-quad) infinite 8s;
+}
+.deco-square:nth-child(5) {
+  width: 3px; height: 3px;
+  top: 12%; right: 25%;
+  animation: drift 18s var(--ease-out-quad) infinite 3s;
+  opacity: 0.05;
+}
+.deco-square:nth-child(6) {
+  width: 7px; height: 7px;
+  top: 48%; left: 18%;
+  animation: drift 26s var(--ease-out-quad) infinite 7s;
+  opacity: 0.025;
+}
+
+/* ── GRADIENT ORBS ── */
+.deco-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.deco-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.deco-orb:nth-child(1) {
+  width: 500px; height: 500px;
+  top: -10%; right: -5%;
+  background: rgba(64, 58, 52, 0.035);
+  animation: orbFloat 20s ease-in-out infinite;
+}
+
+.deco-orb:nth-child(2) {
+  width: 400px; height: 400px;
+  bottom: 10%; left: -8%;
+  background: rgba(100, 80, 60, 0.025);
+  animation: orbFloat 25s ease-in-out infinite 4s;
+}
+
+.deco-orb:nth-child(3) {
+  width: 300px; height: 300px;
+  top: 40%; left: 50%;
+  background: rgba(64, 58, 52, 0.02);
+  animation: orbFloat 18s ease-in-out infinite 8s;
+}
+
+/* ── ANIMATED SECTION DIVIDERS ── */
+.section-line {
+  position: relative;
+  height: 1px;
+  margin: 0 auto;
+  max-width: 120px;
+  overflow: hidden;
+}
+
+.section-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--text-primary);
+  opacity: 0.12;
+  transform-origin: left;
+  animation: expandLine 1.2s var(--ease-out-expo) both;
+}
+
+.section-line.delay-1::after { animation-delay: 0.6s; }
+.section-line.delay-2::after { animation-delay: 0.8s; }
+
+/* ── ACCENT SQUARE (inline decorative mark) ── */
+.accent-mark {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--text-primary);
+  opacity: 0.15;
+  margin-right: 12px;
+  vertical-align: middle;
+  animation: fadeIn 1s var(--ease-out-expo) 0.5s both;
+}
+
+/* ── DOT GRID PATTERN ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.3;
+  background-image: radial-gradient(circle, rgba(64, 58, 52, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── HEADER ── */
 header {
   position: sticky;

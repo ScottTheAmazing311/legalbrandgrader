@@ -198,6 +198,13 @@ export default function Home() {
 
   return (
     <>
+      {/* GLOBAL DECORATIVE ORBS */}
+      <div className="deco-orbs">
+        <div className="deco-orb"></div>
+        <div className="deco-orb"></div>
+        <div className="deco-orb"></div>
+      </div>
+
       {/* HEADER */}
       <header>
         <div className="logo">
@@ -210,7 +217,16 @@ export default function Home() {
       {/* INPUT SECTION */}
       {currentView === 'input' && (
         <div id="inputSection">
-          <div className="hero">
+          <div className="hero" style={{ position: 'relative' }}>
+            {/* Floating decorative squares */}
+            <div className="deco-squares">
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+            </div>
             <div className="hero-eyebrow">Brand Intelligence for Law Firms</div>
             <h1>How does your firm&apos;s<br /><em>brand</em> stack up?</h1>
             <p className="hero-sub">Enter your firm&apos;s website and get an instant brand score across 8 dimensions — benchmarked against firms that have cracked the code on legal branding.</p>
@@ -241,9 +257,22 @@ export default function Home() {
             {error && <div className="error-msg visible">{error}</div>}
           </div>
 
+          {/* Animated section divider */}
+          <div className="section-line delay-1" style={{ marginTop: '80px' }}></div>
+
           {/* WHY IT MATTERS SECTION */}
-          <div className="why-matters-section">
+          <div className="why-matters-section" style={{ position: 'relative' }}>
+            {/* Floating squares for this section too */}
+            <div className="deco-squares">
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+              <div className="deco-square"></div>
+            </div>
             <div className="why-matters-header">
+              <div className="section-line" style={{ marginBottom: '32px' }}></div>
               <h2 className="why-matters-title">Why Your Legal Brand Matters More Than Ever</h2>
               <p className="why-matters-subtitle">In a crowded market, your brand is the difference between being chosen and being overlooked.</p>
             </div>
