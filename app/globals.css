@@ -1236,28 +1236,7 @@ header {
   margin-bottom: 48px;
 }
 
-/* First card spans full width — featured */
-.why-matters-card:first-child {
-  grid-column: 1 / -1;
-  flex-direction: row;
-}
-
-.why-matters-card:first-child .why-matters-art {
-  width: 50%;
-  height: auto;
-  min-height: 240px;
-}
-
-.why-matters-card:first-child .why-matters-card-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 36px 40px;
-}
-
-.why-matters-card:first-child .why-matters-card-title {
-  font-size: 1.3rem;
-}
+/* All cards uniform — no featured first card */
 
 /* ── ART BANNER CARDS ── */
 .why-matters-card {
@@ -1412,15 +1391,6 @@ header {
     grid-template-columns: 1fr;
     gap: 8px;
     margin-bottom: 32px;
-  }
-
-  .why-matters-card:first-child {
-    flex-direction: column;
-  }
-
-  .why-matters-card:first-child .why-matters-art {
-    width: 100%;
-    min-height: 180px;
   }
 
   .why-matters-art {
