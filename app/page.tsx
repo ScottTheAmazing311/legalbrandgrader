@@ -207,10 +207,9 @@ export default function Home() {
 
       {/* HEADER */}
       <header>
-        <div className="logo">
-          <div className="logo-mark"></div>
-          <div className="logo-text">LegalBrandGrader</div>
-        </div>
+        <a className="logo" href="https://scottbot6767-ux.github.io/law-firm-audits/" style={{display:'flex',alignItems:'center'}}>
+          <img src="/logo.png" alt="LawFirmAudits" style={{height:'26px',width:'auto',display:'block',mixBlendMode:'multiply'}} />
+        </a>
         <div className="header-tag">Calibrated against elite exemplars</div>
       </header>
 
