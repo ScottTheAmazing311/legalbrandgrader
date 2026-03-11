@@ -276,9 +276,9 @@ function discoverSubpages(homepage: ParsedPage, baseUrl: string): string[] {
     }
   }
 
-  // Sort by priority descending, return top 3
+  // Sort by priority descending, return top 5
   candidates.sort((a, b) => b.priority - a.priority);
-  return candidates.slice(0, 3).map(c => c.url);
+  return candidates.slice(0, 5).map(c => c.url);
 }
 
 // ═══════════════════════════════════════════════════════════

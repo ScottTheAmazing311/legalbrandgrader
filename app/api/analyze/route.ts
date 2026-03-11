@@ -25,6 +25,17 @@ function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTie
     ? `\n\nHere is the actual scraped content from the firm's website:\n\n${scrapedContent}\n\nUse this content as the PRIMARY basis for your scoring. Be specific about what you observe in the actual content above.\n`
     : `\n\nNote: We were unable to scrape this website's content. Base your analysis on your knowledge of this firm and typical patterns for firms at this URL. Be transparent that your analysis is inference-based.\n`;
 
+  const jsRenderingNote = `
+IMPORTANT — SCRAPING LIMITATIONS:
+If the scraped content appears thin, mostly CSS/JS, or lacking expected signals, the website is likely JavaScript-rendered (React, Next.js, Drupal, Angular, Elementor, WordPress page builders). In this case:
+- Do NOT assume the firm lacks brand elements just because they weren't scraped
+- Use whatever IS available (title, meta, schema data, URL patterns, firm name) to infer brand quality
+- Score conservatively but fairly — thin scraped content should result in moderate scores (50-68), not failing grades
+- If the firm is clearly well-known or large based on any available signal, score generously (60-75)
+- If schema.org data, OG tags, or structured data show professional implementation, boost uxFoundations and brandClarity
+- A JS-rendered site IS a sign of modern development — this should positively impact visualFreshness
+`;
+
   const isLargeFirm = firmTier === 'large' || firmTier === 'biglaw';
 
   const dimensionLabels = isLargeFirm
@@ -53,11 +64,12 @@ function buildAnalysisPrompt(url: string, scrapedContent: string | null, firmTie
   const outlierClause = isOutlier
     ? `\n\nIMPORTANT — OUTLIER FIRM (500+ employees detected):
 This is an exceptionally large firm where standard boutique/mid-size brand rules may not fully apply. Grade this firm LESS STRICTLY:
-- Add 8-12 points across all dimensions compared to how you'd score a typical firm with similar branding
+- Add 12-18 points across all dimensions compared to how you'd score a typical firm with similar branding
 - Massive firms achieve brand awareness through sheer scale, advertising spend, and market saturation — credit this
 - Their UVP may be "we're everywhere and we're the biggest" — that IS a valid differentiator at this scale
 - Do not penalize for template-style websites if the firm compensates with massive brand recognition
-- Focus criticism on genuinely poor execution, not on lacking boutique-style personality\n`
+- Focus criticism on genuinely poor execution, not on lacking boutique-style personality
+- If scraped content appears thin (JS-rendered site), infer brand signals from the firm name, URL, and any detectable schema data. A mega-firm with thin scraped content should NOT be penalized — their brand power exists regardless of what a scraper can extract.\n`
     : '';
 
   const scoringGuidelines = isLargeFirm
@@ -75,21 +87,23 @@ This is an exceptionally large firm where standard boutique/mid-size brand rules
 - Only penalize for genuinely outdated design, poor UX, thin content, or lack of depth — not for being "corporate."`
     : `CRITICAL SCORING GUIDELINES - Be STRICT and HONEST:
 - The benchmarks above represent the TOP 1% of law firm brands (firms like TopDog Law, Cho Law, ABC Law Centers, Bick Law)
-- Most law firms are mediocre and score 35-60 overall. This is the NORM.
-- Large corporate/BigLaw firms with generic branding typically score 45-65 (even if they look "professional")
-- Only truly exceptional, distinctive brands score 70-79
-- Only elite exemplar-level brands score 80+
-- A score of 80+ means the firm rivals or exceeds TopDog Law, Cho Law, ABC Law Centers, and Bick Law in brand excellence
-- Be critical: professional-looking ≠ strong brand. Most law firms have bland, undifferentiated brands.
-- Generic stock photos, lawyer headshots on white backgrounds, and "we fight for you" language = low scores
-- High scores require: unique visual identity, differentiated language, visible culture, substantial people investment, and fresh modern design`;
+- Below-average law firms with generic templated sites score 30-45.
+- Average law firms score 45-55. This is the NORM for firms with professional but undifferentiated brands.
+- Well-executed brands with some distinct elements score 55-68.
+- Large corporate/BigLaw firms with polished branding typically score 55-70.
+- Truly exceptional, distinctive brands score 70-79.
+- Elite exemplar-level brands score 80+.
+- A score of 80+ means the firm rivals or exceeds TopDog Law, Cho Law, ABC Law Centers, and Bick Law in brand excellence.
+- Be critical: professional-looking ≠ strong brand, but professional-looking IS better than amateur.
+- Generic stock photos, lawyer headshots on white backgrounds, and "we fight for you" language = moderate scores (40-50), not failing.
+- High scores require: unique visual identity, differentiated language, visible culture, substantial people investment, and fresh modern design.`;
 
   const peerComparisonInstruction = isLargeFirm
     ? '"peerComparison": "string (1 sentence comparing to peer institutional firms like Cravath, Wachtell, Gibson Dunn, Cooley)"'
     : '"peerComparison": "string (1 sentence comparing to exemplar firms like TopDog Law, Cho Law, ABC Law Centers, Bick Law)"';
 
   return `You are a legal brand analyst. Analyze the law firm website at: ${url}
-${contentBlock}${outlierClause}
+${contentBlock}${outlierClause}${jsRenderingNote}
 Based on the content provided and observable signals, score this firm on 8 brand dimensions.
 
 Return ONLY a valid JSON object — no markdown, no explanation, no preamble. The JSON must match this exact structure:
