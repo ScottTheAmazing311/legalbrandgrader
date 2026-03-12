@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Legal Brand Grader',
-  description: 'How does your firm\'s brand stack up? Get an instant brand score across 8 dimensions — benchmarked against firms that have cracked the code on legal branding.',
+  title: 'Perception Audit — When They Find You, What Do They Think?',
+  description: 'Free audit that scans your law firm\'s brand clarity, reputation signals, visual identity, and messaging — then scores how your brand actually lands with potential clients.',
 }
 
 export default function RootLayout({

@@ -210,7 +210,7 @@ export default function Home() {
         <a className="logo" href="https://scottbot6767-ux.github.io/law-firm-audits/" style={{display:'flex',alignItems:'center'}}>
           <img src="/logo.png" alt="LawFirmAudits" style={{height:'26px',width:'auto',display:'block',mixBlendMode:'multiply'}} />
         </a>
-        <div className="header-tag">Calibrated against elite exemplars</div>
+        <div className="header-tag">Powered by Rankings.io</div>
       </header>
 
       {/* INPUT SECTION */}
