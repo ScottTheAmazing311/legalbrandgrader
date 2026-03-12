@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { scrapeSite, buildContentSummary } from '../../lib/scraper';
 import { detectFirmSize, type FirmTier, type FirmSizeResult } from '../../lib/firmSizeDetector';
+import { crawlSite, buildSiteSummaryForLLM, getContentStats, type CrawlResult } from '../../lib/cloudflare-crawl';
 
-export const maxDuration = 30;
+export const maxDuration = 120; // Allow more time for crawl + analysis
 
 // Exemplar benchmarks
 const EXEMPLAR_BENCHMARKS = {
@@ -250,20 +251,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Step 1: Scrape website ──
+    // ── Step 1: Scrape website + attempt Cloudflare crawl in parallel ──
     let scrapedSite;
-    try {
-      scrapedSite = await scrapeSite(normalizedUrl);
-    } catch (err: any) {
-      console.error('Scraping error:', err);
-      scrapedSite = { homepage: null, subpages: [], errors: [err.message] };
-    }
+    let crawlResult: CrawlResult | null = null;
 
-    // ── Step 2: Detect firm size ──
+    const [scrapeOutcome, crawlOutcome] = await Promise.allSettled([
+      scrapeSite(normalizedUrl),
+      crawlSite({
+        url: normalizedUrl,
+        limit: 75,
+        maxDepth: 3,
+        formats: ['markdown', 'html'],
+      }),
+    ]);
+
+    scrapedSite = scrapeOutcome.status === 'fulfilled'
+      ? scrapeOutcome.value
+      : { homepage: null, subpages: [], errors: [(scrapeOutcome.reason as Error).message] };
+
+    crawlResult = crawlOutcome.status === 'fulfilled' ? crawlOutcome.value : null;
+
+    // ── Step 2: Detect firm size (uses structured scraper data) ──
     const firmSizeResult = detectFirmSize(scrapedSite);
 
-    // ── Step 3: Build content summary ──
-    const scrapedContent = buildContentSummary(scrapedSite);
+    // ── Step 3: Build content summary — prefer crawl data if available ──
+    let scrapedContent: string | null;
+    let usedCrawl = false;
+
+    if (crawlResult && crawlResult.pages.filter(p => p.status === 'completed').length > 0) {
+      // Use richer crawl data for Claude analysis
+      scrapedContent = buildSiteSummaryForLLM(crawlResult, {
+        maxCharsPerPage: 3000,
+        maxTotalChars: 14000,
+        priorityPatterns: [
+          '/',
+          '/about*',
+          '/our-firm*',
+          '/team*',
+          '/attorney*',
+          '/lawyer*',
+          '/people*',
+          '/practice-area*',
+          '/case-result*',
+          '/result*',
+          '/testimonial*',
+          '/review*',
+          '/blog*',
+          '/news*',
+          '/contact*',
+        ],
+      });
+      usedCrawl = true;
+    } else {
+      // Fallback to existing scraper content
+      scrapedContent = buildContentSummary(scrapedSite);
+    }
 
     // ── Step 4: Build prompt ──
     const prompt = buildAnalysisPrompt(normalizedUrl, scrapedContent, firmSizeResult.tier, firmSizeResult.isOutlier);
@@ -293,15 +335,23 @@ export async function POST(request: NextRequest) {
     const result = JSON.parse(cleanedText);
 
     // ── Step 6: Merge scraping metadata into result ──
-    const scrapedPagesCount = (scrapedSite.homepage ? 1 : 0) + scrapedSite.subpages.length;
+    const scraperPageCount = (scrapedSite.homepage ? 1 : 0) + scrapedSite.subpages.length;
+    const crawlStats = crawlResult ? getContentStats(crawlResult) : null;
 
     return NextResponse.json({
       ...result,
       firmSizeTier: firmSizeResult.tier,
       firmSizeSignals: firmSizeResult.signals,
       isOutlierFirm: firmSizeResult.isOutlier,
-      scrapedPagesCount,
+      scrapedPagesCount: usedCrawl ? (crawlStats?.completedPages ?? scraperPageCount) : scraperPageCount,
       scrapingErrors: scrapedSite.errors,
+      crawlEnhanced: usedCrawl,
+      crawlStats: crawlStats ? {
+        totalPages: crawlStats.totalPages,
+        completedPages: crawlStats.completedPages,
+        avgWordCount: crawlStats.avgWordCount,
+        pagesBySection: crawlStats.pagesBySection,
+      } : null,
     });
 
   } catch (error: any) {
