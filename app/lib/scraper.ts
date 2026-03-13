@@ -291,7 +291,10 @@ export async function scrapeSite(url: string): Promise<ScrapedSite> {
 
   // 1. Run Cloudflare crawl and direct homepage fetch in parallel
   const [crawlResult, homepageHtml] = await Promise.all([
-    crawlSite({ url, limit: 75, maxDepth: 3, formats: ['html'], maxAge: 3600 }).catch((err: any) => {
+    Promise.race([
+      crawlSite({ url, limit: 30, maxDepth: 2, formats: ['html'], maxAge: 3600 }),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 90000)),
+    ]).catch((err: any) => {
       errors.push(`Crawl failed: ${err.message}`);
       return null as CrawlResult | null;
     }),
