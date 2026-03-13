@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { crawlSite, CrawlResult } from './cloudflare-crawl';
 
 // ═══════════════════════════════════════════════════════════
 // TYPES
@@ -29,7 +30,7 @@ const MAX_RESPONSE_BYTES = 1_000_000; // 1MB cap
 // ═══════════════════════════════════════════════════════════
 // FETCH PAGE
 // ═══════════════════════════════════════════════════════════
-async function fetchPage(url: string, timeoutMs = 8000): Promise<string> {
+async function fetchPage(url: string, timeoutMs = 8000, acceptAnyStatus = false): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -44,7 +45,7 @@ async function fetchPage(url: string, timeoutMs = 8000): Promise<string> {
       redirect: 'follow',
     });
 
-    if (!response.ok) {
+    if (!acceptAnyStatus && !response.ok) {
       throw new Error(`HTTP ${response.status} for ${url}`);
     }
 
@@ -288,36 +289,94 @@ export async function scrapeSite(url: string): Promise<ScrapedSite> {
   const errors: string[] = [];
   let homepage: ParsedPage | null = null;
 
-  // 1. Fetch + parse homepage
-  try {
-    const html = await fetchPage(url);
-    homepage = parsePage(html, url);
-  } catch (err: any) {
-    errors.push(`Homepage fetch failed: ${err.message}`);
+  // 1. Run Cloudflare crawl and direct homepage fetch in parallel
+  const [crawlResult, homepageHtml] = await Promise.all([
+    crawlSite({ url, limit: 75, maxDepth: 3, formats: ['html'], maxAge: 3600 }).catch((err: any) => {
+      errors.push(`Crawl failed: ${err.message}`);
+      return null as CrawlResult | null;
+    }),
+    fetchPage(url, 8000, true).catch((err: any) => {
+      errors.push(`Homepage fetch failed: ${err.message}`);
+      return null as string | null;
+    }),
+  ]);
+
+  // 2. Process crawl pages FIRST as primary data source
+  const subpages: ParsedPage[] = [];
+  const processedUrls = new Set<string>();
+
+  if (crawlResult && crawlResult.pages.length > 0) {
+    const normalizedInputUrl = normalizeUrl(url);
+
+    for (const page of crawlResult.pages) {
+      if (page.status !== 'completed' || !page.html) continue;
+
+      const normalizedPageUrl = normalizeUrl(page.url);
+      if (processedUrls.has(normalizedPageUrl)) continue;
+      processedUrls.add(normalizedPageUrl);
+
+      try {
+        const parsed = parsePage(page.html, page.url);
+        if (normalizedPageUrl === normalizedInputUrl) {
+          homepage = parsed;
+        } else {
+          subpages.push(parsed);
+        }
+      } catch (err: any) {
+        errors.push(`Crawl page parse failed (${page.url}): ${err.message}`);
+      }
+    }
+  }
+
+  // 3. If homepage not found from crawl, use direct fetch result
+  if (!homepage && homepageHtml) {
+    try {
+      homepage = parsePage(homepageHtml, url);
+    } catch (err: any) {
+      errors.push(`Homepage parse failed: ${err.message}`);
+    }
+  }
+
+  // If we still have no homepage, we can't proceed
+  if (!homepage) {
     return { homepage: null, subpages: [], errors };
   }
 
-  // 2. Discover subpage URLs
-  const subpageUrls = discoverSubpages(homepage, url);
+  // 4. Fall back to direct fetch if crawl returned few pages
+  const CRAWL_MIN_PAGES = 3;
+  if (subpages.length < CRAWL_MIN_PAGES) {
+    const subpageUrls = discoverSubpages(homepage, url);
+    const urlsToFetch = subpageUrls.filter(u => !processedUrls.has(normalizeUrl(u)));
 
-  // 3. Fetch subpages in parallel
-  const subpageResults = await Promise.allSettled(
-    subpageUrls.map(async (subUrl) => {
-      const html = await fetchPage(subUrl, 6000);
-      return parsePage(html, subUrl);
-    })
-  );
+    if (urlsToFetch.length > 0) {
+      const subpageResults = await Promise.allSettled(
+        urlsToFetch.map(async (subUrl) => {
+          const html = await fetchPage(subUrl, 6000);
+          return parsePage(html, subUrl);
+        })
+      );
 
-  const subpages: ParsedPage[] = [];
-  for (const result of subpageResults) {
-    if (result.status === 'fulfilled') {
-      subpages.push(result.value);
-    } else {
-      errors.push(`Subpage fetch failed: ${result.reason?.message || 'Unknown error'}`);
+      for (const result of subpageResults) {
+        if (result.status === 'fulfilled') {
+          subpages.push(result.value);
+        } else {
+          errors.push(`Subpage fetch failed: ${result.reason?.message || 'Unknown error'}`);
+        }
+      }
     }
   }
 
   return { homepage, subpages, errors };
+}
+
+/** Normalize a URL for deduplication (strip trailing slash, www, protocol) */
+function normalizeUrl(raw: string): string {
+  try {
+    const u = new URL(raw.startsWith('http') ? raw : `https://${raw}`);
+    return u.hostname.replace(/^www\./, '') + u.pathname.replace(/\/$/, '');
+  } catch {
+    return raw;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
