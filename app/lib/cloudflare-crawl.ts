@@ -60,7 +60,7 @@ const DEFAULT_REJECT_RESOURCES = ['image', 'media', 'font', 'stylesheet'];
 
 const POLL_START_INTERVAL = 3000;   // 3s
 const POLL_MAX_INTERVAL = 10000;    // 10s
-const POLL_TIMEOUT = 55000;         // 55s — must fit within Vercel function timeout
+const POLL_TIMEOUT = 20000;         // 20s — leave room for scraper + Claude API within 120s Vercel limit
 
 // ── In-memory cache (persists within a single serverless cold start) ─────────
 

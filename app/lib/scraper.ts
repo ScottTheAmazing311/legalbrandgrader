@@ -293,7 +293,7 @@ export async function scrapeSite(url: string): Promise<ScrapedSite> {
   const [crawlResult, homepageHtml] = await Promise.all([
     Promise.race([
       crawlSite({ url, limit: 30, maxDepth: 2, formats: ['html'], maxAge: 3600 }),
-      new Promise<null>(resolve => setTimeout(() => resolve(null), 90000)),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 20000)),
     ]).catch((err: any) => {
       errors.push(`Crawl failed: ${err.message}`);
       return null as CrawlResult | null;

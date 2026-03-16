@@ -251,25 +251,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Step 1: Scrape website + attempt Cloudflare crawl in parallel ──
+    // ── Step 1: Single crawl + scrape in parallel (shared crawl result) ──
     let scrapedSite;
     let crawlResult: CrawlResult | null = null;
 
-    const [scrapeOutcome, crawlOutcome] = await Promise.allSettled([
-      scrapeSite(normalizedUrl),
+    // Run ONE crawl and the direct-fetch scraper in parallel
+    // The scraper also calls crawlSite internally but it's cached, so no double work
+    // Hard 30s cap on crawl to leave time for Claude API
+    const crawlWithTimeout = Promise.race([
       crawlSite({
         url: normalizedUrl,
         limit: 75,
         maxDepth: 3,
         formats: ['markdown', 'html'],
       }),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 30000)),
+    ]).catch(() => null as CrawlResult | null);
+
+    const scrapeWithTimeout = Promise.race([
+      scrapeSite(normalizedUrl),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Scrape timeout')), 40000)),
+    ]).catch(() => ({ homepage: null, subpages: [], errors: ['Scrape timed out'] } as { homepage: null; subpages: never[]; errors: string[] }));
+
+    const [crawlSettled, scrapeSettled] = await Promise.all([
+      crawlWithTimeout,
+      scrapeWithTimeout,
     ]);
 
-    scrapedSite = scrapeOutcome.status === 'fulfilled'
-      ? scrapeOutcome.value
-      : { homepage: null, subpages: [], errors: [(scrapeOutcome.reason as Error).message] };
-
-    crawlResult = crawlOutcome.status === 'fulfilled' ? crawlOutcome.value : null;
+    crawlResult = crawlSettled;
+    scrapedSite = scrapeSettled;
 
     // ── Step 2: Detect firm size (uses structured scraper data) ──
     const firmSizeResult = detectFirmSize(scrapedSite);
@@ -332,7 +342,18 @@ export async function POST(request: NextRequest) {
 
     // Clean and parse JSON
     const cleanedText = responseText.replace(/```json|```/g, '').trim();
-    const result = JSON.parse(cleanedText);
+    let result;
+    try {
+      result = JSON.parse(cleanedText);
+    } catch {
+      // Try extracting JSON object from response
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        result = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Failed to parse analysis response — please try again');
+      }
+    }
 
     // ── Step 6: Merge scraping metadata into result ──
     const scraperPageCount = (scrapedSite.homepage ? 1 : 0) + scrapedSite.subpages.length;

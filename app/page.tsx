@@ -1,25 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { encodeResults } from './lib/share';
 
 // ═══════════════════════════════════════════════════════════
 // EXEMPLAR DATABASE & CONSTANTS
 // ═══════════════════════════════════════════════════════════
-const BOUTIQUE_EXEMPLAR_FIRMS = [
+export const BOUTIQUE_EXEMPLAR_FIRMS = [
   { name: "TopDog Law", url: "topdoglaw.com", specialty: "Personal Injury", strength: "Brand Identity & Founder Story" },
   { name: "Cho Law LLC", url: "cholawllc.com", specialty: "Immigration", strength: "Visual Coherence & Client Framing" },
   { name: "ABC Law Centers", url: "abclawcenters.com", specialty: "Birth Injury", strength: "Niche Authority & People Investment" },
   { name: "Bick Law LLP", url: "bicklawllp.com", specialty: "Environmental", strength: "UVP Clarity & Culture Visibility" }
 ];
 
-const LARGE_FIRM_EXEMPLARS = [
+export const LARGE_FIRM_EXEMPLARS = [
   { name: "Cravath, Swaine & Moore", url: "cravath.com", specialty: "Corporate / Litigation", strength: "Institutional Authority & Heritage" },
   { name: "Wachtell, Lipton", url: "wlrk.com", specialty: "M&A / Corporate", strength: "Elite Positioning & Selectivity" },
   { name: "Cooley LLP", url: "cooley.com", specialty: "Tech / Venture", strength: "Digital Sophistication & Innovation Brand" },
   { name: "Gibson Dunn", url: "gibsondunn.com", specialty: "Litigation / Corporate", strength: "Thought Leadership & Talent Depth" }
 ];
 
-const EXEMPLAR_BENCHMARKS = {
+export const EXEMPLAR_BENCHMARKS = {
   brandClarity: 87,
   languageDifferentiation: 82,
   visualCoherence: 79,
@@ -30,7 +31,7 @@ const EXEMPLAR_BENCHMARKS = {
   uxFoundations: 81
 };
 
-const SCORING_WEIGHTS = {
+export const SCORING_WEIGHTS = {
   brandClarity: 20,
   languageDifferentiation: 15,
   visualCoherence: 10,
@@ -41,7 +42,7 @@ const SCORING_WEIGHTS = {
   uxFoundations: 10
 };
 
-const TIER_LABELS: Record<string, string> = {
+export const TIER_LABELS: Record<string, string> = {
   boutique: 'Boutique Firm',
   midsize: 'Mid-Size Firm',
   large: 'Large Firm',
@@ -51,14 +52,14 @@ const TIER_LABELS: Record<string, string> = {
 // ═══════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════
-interface CategoryData {
+export interface CategoryData {
   score: number;
   label: string;
   summary: string;
   findings: string[];
 }
 
-interface AnalysisResult {
+export interface AnalysisResult {
   firmName: string;
   firmType: string;
   overallScore: number;
@@ -81,7 +82,7 @@ type ViewState = 'input' | 'loading' | 'results';
 // ═══════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════
-function getScoreClass(score: number): string {
+export function getScoreClass(score: number): string {
   if (score >= 81) return 'excellent';
   if (score >= 70) return 'good';
   if (score >= 60) return 'average';
@@ -89,7 +90,7 @@ function getScoreClass(score: number): string {
   return 'poor';
 }
 
-function getGradeLabel(score: number): string {
+export function getGradeLabel(score: number): string {
   if (score >= 81) return 'Strong Brand';
   if (score >= 70) return 'Solid';
   if (score >= 60) return 'Needs Polish';
@@ -177,7 +178,7 @@ export default function Home() {
     } catch (err: any) {
       console.error('Analysis error:', err);
       setCurrentView('input');
-      setError('Unable to analyze this site. Please check the URL and try again.');
+      setError(err?.message || 'Unable to analyze this site. Please check the URL and try again.');
     }
   };
 
@@ -355,9 +356,19 @@ export default function Home() {
 // ═══════════════════════════════════════════════════════════
 // RESULTS COMPONENT
 // ═══════════════════════════════════════════════════════════
-function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url: string; onReset: () => void }) {
+export function ResultsSection({ result, url, onReset, isShared }: { result: AnalysisResult; url: string; onReset?: () => void; isShared?: boolean }) {
   const overall = result.overallScore || 0;
   const scoreClass = getScoreClass(overall);
+
+  const [shareMsg, setShareMsg] = useState('');
+  const handleShare = () => {
+    const encoded = encodeResults({ ...result, _shareUrl: url });
+    const shareUrl = `${window.location.origin}/share#${encoded}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setShareMsg('Link Copied!');
+      setTimeout(() => setShareMsg(''), 2000);
+    });
+  };
 
   const avgExemplar = Math.round(
     Object.values(EXEMPLAR_BENCHMARKS).reduce((a, b) => a + b, 0) /
@@ -462,6 +473,24 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
           <div className={`score-grade-badge grade-${scoreClass}`}>{getGradeLabel(overall)}</div>
         </div>
       </div>
+
+      {/* SHARE BUTTON */}
+      {!isShared && (
+        <div className="share-btn-wrap">
+          <button className="share-btn" onClick={handleShare}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+            {shareMsg || 'Share Results'}
+          </button>
+        </div>
+      )}
+
+      {/* SHARED BANNER */}
+      {isShared && (
+        <div className="shared-banner">Shared results — <a href="/">Run your own audit</a></div>
+      )}
 
       {/* CATEGORY BREAKDOWN */}
       <div className="categories-label">Score Breakdown · 8 Dimensions</div>
@@ -625,38 +654,55 @@ function ResultsSection({ result, url, onReset }: { result: AnalysisResult; url:
       <div className="section-divider"></div>
 
       {/* CTA */}
-      <div className="cta-section">
-        <div className="cta-eyebrow">Ready to close the gap?</div>
-        <div className="cta-title">Turn your score into a strategy.</div>
-        <div className="cta-sub">
-          Your scorecard shows you where you stand. A full brand audit shows you exactly what to fix, how to fix it, and in what order — with real examples from firms who&apos;ve done it.
+      {!isShared ? (
+        <div className="cta-section">
+          <div className="cta-eyebrow">Ready to close the gap?</div>
+          <div className="cta-title">Turn your score into a strategy.</div>
+          <div className="cta-sub">
+            Your scorecard shows you where you stand. A full brand audit shows you exactly what to fix, how to fix it, and in what order — with real examples from firms who&apos;ve done it.
+          </div>
+          <div className="cta-buttons">
+            <a
+              href={`mailto:scottknudson@rankings.io?subject=Brand Audit Request — ${encodeURIComponent(url)}&body=I just ran my brand score on Legal Brand Grader and would like to request a full comprehensive brand audit for ${encodeURIComponent(url)}. My overall score was ${overall}/100.`}
+              className="cta-btn-primary"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.03 1.16 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92v2z" />
+              </svg>
+              Request a Full Brand Audit
+            </a>
+            <a
+              href={`mailto:scottknudson@rankings.io?subject=Legal Brand Hacks Download Request&body=I just scored my brand on Legal Brand Grader and would like to receive the Legal Brand Hacks 1-Pager. My firm website is: ${encodeURIComponent(url)}`}
+              className="cta-btn-secondary"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+              Download Legal Brand Hacks
+            </a>
+          </div>
         </div>
-        <div className="cta-buttons">
-          <a
-            href={`mailto:scottknudson@rankings.io?subject=Brand Audit Request — ${encodeURIComponent(url)}&body=I just ran my brand score on Legal Brand Grader and would like to request a full comprehensive brand audit for ${encodeURIComponent(url)}. My overall score was ${overall}/100.`}
-            className="cta-btn-primary"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.03 1.16 2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92v2z" />
-            </svg>
-            Request a Full Brand Audit
-          </a>
-          <a
-            href={`mailto:scottknudson@rankings.io?subject=Legal Brand Hacks Download Request&body=I just scored my brand on Legal Brand Grader and would like to receive the Legal Brand Hacks 1-Pager. My firm website is: ${encodeURIComponent(url)}`}
-            className="cta-btn-secondary"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            Download Legal Brand Hacks
-          </a>
+      ) : (
+        <div className="cta-section">
+          <div className="cta-title">See how your firm&apos;s brand scores.</div>
+          <div className="cta-sub">Run your own Legal Brand assessment — free, instant, no login required.</div>
+          <div className="cta-buttons">
+            <a href="/" className="cta-btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              Run Your Own Audit
+            </a>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* SCORE AGAIN */}
+      {!isShared && (
       <div className="score-again">
         <button className="score-again-btn" onClick={onReset}>← Grade Another Firm</button>
       </div>
+      )}
     </div>
   );
 }
