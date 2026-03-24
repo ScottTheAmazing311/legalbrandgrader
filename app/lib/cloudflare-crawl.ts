@@ -251,6 +251,61 @@ export async function crawlSite(options: CrawlOptions): Promise<CrawlResult | nu
   }
 }
 
+// ── Single-page render (Cloudflare Browser Rendering with fetch fallback) ────
+
+/**
+ * Render a single page using Cloudflare Browser Rendering /crawl (limit=1).
+ * Falls back to raw fetch if Cloudflare API is not configured.
+ */
+export async function renderPage(url: string, timeoutMs = 15000): Promise<{ html: string | null; error: string | null }> {
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_BR_API_TOKEN;
+  const apiBase = accountId ? `https://api.cloudflare.com/client/v4/accounts/${accountId}/browser-rendering/crawl` : null;
+
+  if (!apiBase || !token) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36', 'Accept': 'text/html' },
+        redirect: 'follow',
+      });
+      clearTimeout(timer);
+      if (!res.ok) return { html: null, error: `HTTP ${res.status}` };
+      return { html: await res.text(), error: null };
+    } catch (err: any) {
+      return { html: null, error: err.message };
+    }
+  }
+
+  try {
+    const body = { url, limit: 1, depth: 0, formats: ['html'], rejectResourceTypes: ['image', 'media', 'font', 'stylesheet'] };
+    const res = await fetch(apiBase, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) return { html: null, error: `Render failed: ${res.status}` };
+    const data = await res.json();
+    const jobId = data.result;
+    if (!jobId) return { html: null, error: 'No job ID' };
+
+    const start = Date.now();
+    let interval = 1500;
+    while (Date.now() - start < Math.min(timeoutMs, 20000)) {
+      await new Promise(r => setTimeout(r, interval));
+      const pr = await fetch(`${apiBase}/${jobId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!pr.ok) continue;
+      const pd = await pr.json();
+      if (pd.result.status && pd.result.status !== 'running') {
+        const page = pd.result.records?.find((r: any) => r.status === 'completed' && r.html);
+        return page ? { html: page.html, error: null } : { html: null, error: 'No HTML' };
+      }
+      interval = Math.min(interval * 1.3, 5000);
+    }
+    return { html: null, error: 'Timed out' };
+  } catch (err: any) {
+    return { html: null, error: err.message };
+  }
+}
+
 // ── Helper functions for querying crawl data ─────────────────────────────────
 
 /**

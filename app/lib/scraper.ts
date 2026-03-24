@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { crawlSite, CrawlResult } from './cloudflare-crawl';
+import { crawlSite, CrawlResult, renderPage } from './cloudflare-crawl';
 
 // ═══════════════════════════════════════════════════════════
 // TYPES
@@ -31,6 +31,13 @@ const MAX_RESPONSE_BYTES = 1_000_000; // 1MB cap
 // FETCH PAGE
 // ═══════════════════════════════════════════════════════════
 async function fetchPage(url: string, timeoutMs = 8000, acceptAnyStatus = false): Promise<string> {
+  // Try Cloudflare Browser Rendering first for JS-heavy sites
+  const rendered = await renderPage(url, timeoutMs).catch(() => null);
+  if (rendered?.html && rendered.html.length > 500) {
+    return rendered.html.slice(0, MAX_RESPONSE_BYTES);
+  }
+
+  // Fallback to raw fetch
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
