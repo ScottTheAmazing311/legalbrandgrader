@@ -4,6 +4,23 @@ import { scrapeSite, buildContentSummary } from '../../lib/scraper';
 import { detectFirmSize, type FirmTier, type FirmSizeResult } from '../../lib/firmSizeDetector';
 import { crawlSite, buildSiteSummaryForLLM, getContentStats, type CrawlResult } from '../../lib/cloudflare-crawl';
 
+function repairAndParseJSON(raw: string): any {
+  let text = raw.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(text); } catch {}
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON object found in LLM response');
+  text = jsonMatch[0];
+  try { return JSON.parse(text); } catch {}
+  text = text
+    .replace(/,\s*([}\]])/g, '$1')
+    .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":')
+    .replace(/:\s*'([^']*)'/g, ': "$1"')
+    .replace(/\n/g, ' ');
+  try { return JSON.parse(text); } catch (e: any) {
+    throw new Error(`Failed to parse LLM JSON: ${e.message}`);
+  }
+}
+
 export const maxDuration = 120; // Allow more time for crawl + analysis
 
 // Exemplar benchmarks
@@ -341,19 +358,7 @@ export async function POST(request: NextRequest) {
       .join('');
 
     // Clean and parse JSON
-    const cleanedText = responseText.replace(/```json|```/g, '').trim();
-    let result;
-    try {
-      result = JSON.parse(cleanedText);
-    } catch {
-      // Try extracting JSON object from response
-      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('Failed to parse analysis response — please try again');
-      }
-    }
+    const result = repairAndParseJSON(responseText);
 
     // ── Step 6: Merge scraping metadata into result ──
     const scraperPageCount = (scrapedSite.homepage ? 1 : 0) + scrapedSite.subpages.length;
